@@ -1,4 +1,5 @@
 import os.path
+import re
 
 def main():
     
@@ -22,13 +23,21 @@ def main():
     dates = open("dates.txt", "w")
     recs = open("recs.txt", "w")
 
+    special_chars = ['&lt;', '&gt;', '&amp;', '&apos;', '&quot']
+    replace = ['<', '>', '&', "'", '"']
     for line in flines:
         rowID = getRow(line)
         if rowID != -1:
-            getTerms(line, terms, rowID)
-            getEmails(line, emails, rowID)
-            getDates(line, dates, rowID)
             getRecs(line, recs, rowID)
+            i = 0
+            newLine = line
+            for char in special_chars:
+                newLine = newLine.replace(char, replace[i])
+                i += 1
+
+            getTerms(newLine, terms, rowID)
+            getEmails(newLine, emails, rowID)
+            getDates(newLine, dates, rowID)
         
     f.close()
     terms.close()
@@ -37,7 +46,27 @@ def main():
     recs.close()
 
 def getTerms(line, terms, rowID):
-    pass
+    s_startTag = "<subj>"
+    s_endTag = "</subj>"
+    s = line.find(s_startTag)
+    if s != -1:
+        e = line.find(s_endTag)
+        if (e-s) > len(s_startTag):
+            subjTerms = filter(None, re.split(r'\W|\d', line[s + len(s_startTag):e]))
+            for term in subjTerms:
+                if len(term) > 2:
+                    terms.write("s-" + term.lower() + ":" + rowID + "\n")
+
+    b_startTag = "<body>"
+    b_endTag = "</body>"
+    b = line.find(b_startTag)
+    if b != -1:
+        e = line.find(b_endTag)
+        if (e-b) > len(b_startTag):
+            bodyTerms = filter(None, re.split(r'\W|\d', line[b + len(b_startTag):e]))
+            for term in bodyTerms:
+                if len(term) > 2:
+                    terms.write("b-" + term.lower() + ":" + rowID + "\n")
 
 def getEmails(line, emails, rowID):
     f_startTag = "<from>"
