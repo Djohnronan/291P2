@@ -75,8 +75,9 @@ def getEmails(line, emails, rowID):
     if s != -1:
         e = line.find(f_endTag)
         if (e-s) > len(f_startTag):
-            email = line[s + len(f_startTag):e].lower()
-            emails.write('from-' + email + ":" + rowID + "\n")
+            emailList = line[s + len(f_startTag):e].split(',')
+            for email in emailList:
+                emails.write('from-' + email.lower() + ":" + rowID + "\n")
 
     t_startTag = "<to>"
     t_endTag = "</to>"
@@ -84,8 +85,9 @@ def getEmails(line, emails, rowID):
     if s != -1:
         e = line.find(t_endTag)
         if (e-s) > len(t_startTag):
-            email = line[s + len(t_startTag):e].lower()
-            emails.write('to-' + email + ":" + rowID + "\n")
+            emailList = line[s + len(t_startTag):e].split(',')
+            for email in emailList:
+                emails.write('to-' + email.lower() + ":" + rowID + "\n")
 
     c_startTag = "<cc>"
     c_endTag = "</cc>"
@@ -93,8 +95,9 @@ def getEmails(line, emails, rowID):
     if s != -1:
         e = line.find(c_endTag)
         if (e-s) > len(c_startTag):
-            email = line[s + len(c_startTag):e].lower()
-            emails.write('cc-' + email + ":" + rowID + "\n")
+            emailList = line[s + len(c_startTag):e].split(',')
+            for email in emailList:
+                emails.write('cc-' + email.lower() + ":" + rowID + "\n")
 
     b_startTag = "<bcc>"
     b_endTag = "</bcc>"
@@ -102,8 +105,9 @@ def getEmails(line, emails, rowID):
     if s != -1:
         e = line.find(b_endTag)
         if (e-s) > len(b_startTag):
-            email = line[s + len(b_startTag):e].lower()
-            emails.write('bcc-' + email + ":" + rowID + "\n")
+            emailList = line[s + len(b_startTag):e].split(',')
+            for email in emailList:
+                emails.write('bcc-' + email.lower() + ":" + rowID + "\n")
 
 def getDates(line, dates, rowID):
     startTag = "<date>"
