@@ -6,6 +6,8 @@ def main():
     valid_fname = False
     while not valid_fname:
         fname = input("Enter .xml file name: ")
+        if fname.find('.') == -1:
+            fname = fname + '.xml'
         if not os.path.exists(fname) or not fname.endswith(".xml"):
             print("\n" +fname + " not found or invalid extension type. Please enter a valid .xml file.\n")
         else:
