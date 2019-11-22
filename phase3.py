@@ -7,7 +7,7 @@ def main():
 
     command = input("> ")
 
-    commandStrip  ="".join(sommand.split())
+    commandStrip  ="".join(command.split())
     commandClean = re.split(r'[^-%/\w]+', command)
 
     queries = []
