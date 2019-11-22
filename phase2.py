@@ -32,7 +32,8 @@ def makeIndexes(files):
         i = open(index_files[fname],"w")
         print("Creating " + index_files[fname] + "...")
         for line in f:
-            pair = line.split(':')
+            splitIndex = line.find(":")
+            pair = [line[0:splitIndex], line[splitIndex + 1:]]
             i.write(pair[0].replace("\\", "") + "\n" + pair[1].replace("\\", ""))  
         f.close()
         i.close()
