@@ -3,8 +3,10 @@ import os
 def main():
 
     files = ["emails.txt", "dates.txt", "terms.txt", "recs.txt"]
+
     sortFiles(files)
     makeIndexes(files)
+    load()
 
 def sortFiles(files):
 
@@ -32,6 +34,14 @@ def makeIndexes(files):
         for line in f:
             pair = line.split(':')
             i.write(pair[0].replace("\\", "") + "\n" + pair[1].replace("\\", ""))  
-                
+        f.close()
+        i.close()
+
+def load():
+    os.system("db_load -T -f em.idx -t btree email.db")
+    os.system("db_load -T -f da.idx -t btree date.db")
+    os.system("db_load -T -f te.idx -t btree terms.db")
+    os.system("db_load -T -f re.idx -t hash recs.db")
+        
 if __name__ == "__main__":
     main()
