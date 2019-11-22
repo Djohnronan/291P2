@@ -2,13 +2,26 @@ from bsddb3 import db
 import re
 
 def main():
-
+    
+    output = "full"
     keyWords = ["subj", "body", "from",  "to",  "cc", "bcc", "date"]
+    run = True
 
-    command = input("> ")
+    while run:
+        queries = []
+        command = input("> ")
+        command = command.lower()
 
-    commandStrip  ="".join(command.split())
-    commandClean = re.split(r'[^-%/\w]+', command)
+        commandStrip = "".join(command.split())
+        commandClean = re.split(r'[^-%/\w]+', command)
+
+        if command == "output=full" or command == "output=brief":
+            output = commandStrip[1]
+        else:
+            queries = getQueries(commandClean, commandStrip, keyWords)
+
+
+def getQueries(commandClean, commandStrip, keyWords):
 
     queries = []
     added = []
@@ -25,10 +38,8 @@ def main():
     for term in commandClean:
         if term not in added:
             queries.append(term)
-  
-            
-
-
     
+    return queries
+
 if __name__ == "__main__":
     main()
