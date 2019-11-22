@@ -12,8 +12,6 @@ def main():
             print("\n" +fname + " not found or invalid extension type. Please enter a valid .xml file.\n")
         else:
             valid_fname = True
-    f = open(fname, "r")
-    flines = f.readlines()
 
     datafiles = ["terms", "emails", "dates", "recs"]
     for dfile in datafiles:
@@ -25,9 +23,11 @@ def main():
     dates = open("dates.txt", "w")
     recs = open("recs.txt", "w")
 
+    f = open(fname, "r")
+
     special_chars = ['&lt;', '&gt;', '&amp;', '&apos;', '&quot']
     replace = ['<', '>', '&', "'", '"']
-    for line in flines:
+    for line in f:
         rowID = getRow(line)
         if rowID != -1:
             getRecs(line, recs, rowID)
