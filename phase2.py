@@ -50,9 +50,7 @@ def load():
         if os.path.exists(db):
             print(db + "already exists in this directory. Deleting database to prevent format issues...")
             os.remove(db)
-            os.system("db_load -T -c duplicates=1 -f " + dbFiles[db][0] + " -t " + dbFiles[db][1] + " " + db)
-        else:
-            os.system("db_load -T -c duplicates=1 -f " + dbFiles[db][0] + " -t " + dbFiles[db][1] + " " + db)
+        os.system("db_load -T -c duplicates=1 -f " + dbFiles[db][0] + " -t " + dbFiles[db][1] + " " + db)
 
 if __name__ == "__main__":
     main()
