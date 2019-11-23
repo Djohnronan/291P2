@@ -31,7 +31,6 @@ def main():
         masterList.sort()
         # masterList contains (in order) the intersection of all query rowIDs
 
-
 def executeQuery(query):
     operators = [':','<=','<','>=','>']
     prefix = ''
@@ -81,7 +80,7 @@ def dateQuery(date, operator):
     if operator == ":":
         database = db.DB()
         database.set_flags(db.DB_DUP)
-        database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
+        database.open(DB_FILE, None, db.DB_BTREE, db.DB_CREATE)
         cursor = database.cursor()
         result = cursor.set(str.encode(date))
         while result is not None:
@@ -211,6 +210,8 @@ def getQueries(commandClean, commandStrip, keyWords):
         if commandClean[i] in keyWords:
             prefix = commandClean[i]
             operator = commandStrip[commandStrip.find(commandClean[i]) + len(prefix)]
+            if commandStrip.find("=") != -1:
+                operator+= "="
             data = commandClean[i+1]
             queries.append(prefix+operator+data)
             added.append(commandClean[i])
