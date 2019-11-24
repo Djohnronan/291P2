@@ -17,7 +17,8 @@ def main():
         commandClean = re.split(r'[^-%/.@\w]+', command)
 
         if command == "output=full" or command == "output=brief":
-            output = commandStrip[1]
+            output = commandClean[1]
+            continue
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
             # print(queries)
