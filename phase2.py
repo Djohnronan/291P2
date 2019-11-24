@@ -32,16 +32,25 @@ def makeIndexes(files):
         i = open(index_files[fname],"w")
         print("Creating " + index_files[fname] + "...")
         for line in f:
-            pair = line.split(':')
+            splitIndex = line.find(":")
+            pair = [line[0:splitIndex], line[splitIndex + 1:]]
             i.write(pair[0].replace("\\", "") + "\n" + pair[1].replace("\\", ""))  
         f.close()
         i.close()
 
 def load():
-    os.system("db_load -T -f em.idx -t btree email.db")
-    os.system("db_load -T -f da.idx -t btree date.db")
-    os.system("db_load -T -f te.idx -t btree terms.db")
-    os.system("db_load -T -f re.idx -t hash recs.db")
-        
+    dbFiles = {
+        "email.db": ["em.idx", "btree"], 
+        "date.db": ["da.idx", "btree"], 
+        "terms.db": ["te.idx", "btree"], 
+        "recs.db": ["re.idx", "hash"]
+    }
+
+    for db in dbFiles.keys():
+        if os.path.exists(db):
+            print(db + "already exists in this directory. Deleting database to prevent format issues...")
+            os.remove(db)
+        os.system("db_load -T -c duplicates=1 -f " + dbFiles[db][0] + " -t " + dbFiles[db][1] + " " + db)
+
 if __name__ == "__main__":
     main()

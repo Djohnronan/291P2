@@ -54,7 +54,7 @@ def getTerms(line, terms, rowID):
     if s != -1:
         e = line.find(s_endTag)
         if (e-s) > len(s_startTag):
-            subjTerms = filter(None, re.split(r'[^-\w]+', line[s + len(s_startTag):e]))
+            subjTerms = filter(None, re.split(r'[^-_\w]+', line[s + len(s_startTag):e]))
             for term in subjTerms:
                 if len(term) > 2:
                     terms.write("s-" + term.lower() + ":" + rowID + "\n")
@@ -65,7 +65,7 @@ def getTerms(line, terms, rowID):
     if b != -1:
         e = line.find(b_endTag)
         if (e-b) > len(b_startTag):
-            bodyTerms = filter(None, re.split(r'[^-\w]+', line[b + len(b_startTag):e]))
+            bodyTerms = filter(None, re.split(r'[^-_\w]+', line[b + len(b_startTag):e]))
             for term in bodyTerms:
                 if len(term) > 2:
                     terms.write("b-" + term.lower() + ":" + rowID + "\n")
