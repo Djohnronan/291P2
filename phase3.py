@@ -3,7 +3,7 @@ import re
 
 def main():
     
-    output = "full"
+    output = "brief"
     keyWords = ["subj", "body", "from",  "to",  "cc", "bcc", "date"]
     run = True
 
@@ -20,7 +20,7 @@ def main():
             output = commandStrip[1]
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
-            print(queries)
+            # print(queries)
             for query in queries:
                 rowIDs.append(executeQuery(query))
 
@@ -30,6 +30,42 @@ def main():
         masterList = list(masterSet)
         masterList.sort()
         # masterList contains (in order) the intersection of all query rowIDs
+        recs = getRecs(masterList)
+        displayRecs(recs, output)
+
+
+def displayRecs(recs, output):
+    
+    rowID = recs[0].decode()
+    rec = recs[1].decode()
+
+    if output == "brief":
+
+        s_startTag = "<subj>"
+        s_endTag = "</subj>"
+        s = rec.find(s_startTag)
+        if s != -1:
+            e = rec.find(s_endTag)
+            if (e-s) > len(s_startTag):
+                subject = rec[s + len(s_startTag):e]
+        print(rowID, subject)
+
+    else:
+        pass
+
+
+def getRecs(masterList):
+    DB_FILE = 'recs.db'
+    database = db.DB()
+    database.set_flags(db.DB_DUP)
+    database.open(DB_FILE, None, db.DB_HASH, db.DB_CREATE)
+    cursor = database.cursor()
+
+    for rowID in masterList:
+        rec = cursor.set(str.encode(rowID))
+    
+    return rec
+
 
 def executeQuery(query):
     operators = [':','<=','<','>=','>']
@@ -40,7 +76,7 @@ def executeQuery(query):
         if query.find(operator) != -1:
             prefix, suffix = query.split(operator)
             op = operator
-            print(op)
+            # print(op)
             break
     if op != '':
         emailPrefix = ['to', 'from', 'cc', 'bcc']
@@ -63,7 +99,6 @@ def emailQuery(prefix, email):
     database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
     cursor = database.cursor()
     rowIDs = set()
-
 
     result = cursor.set(str.encode(key))
     while result is not None:
@@ -122,6 +157,7 @@ def gtRangeSearch(key, equal, dbName):
     
     cursor.close()
     database.close()
+
     return rowIDs
 
 
@@ -147,9 +183,9 @@ def ltRangeSearch(key, equal, dbName):
             result = cursor.next_dup()
         result = cursor.next()
     
-    
     cursor.close()
     database.close()
+
     return rowIDs
 
 
@@ -195,6 +231,7 @@ def termQuery(prefix, term):
                 result = result[1].decode()
                 rowIDs.add(result)
                 result = cursor.next_dup()
+
     cursor.close()
     database.close()
     
