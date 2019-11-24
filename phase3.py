@@ -37,17 +37,20 @@ def main():
 def displayRecs(recs, output):
     for record in recs:
         rowID = record[0].decode()
-        rec = record[1].decode()
+        email = record[1].decode()
 
         if output == "brief":
             s_startTag = "<subj>"
             s_endTag = "</subj>"
-            s = rec.find(s_startTag)
+            s = email.find(s_startTag)
             if s != -1:
-                e = rec.find(s_endTag)
+                e = email.find(s_endTag)
                 if (e-s) > len(s_startTag):
-                    subject = rec[s + len(s_startTag):e]
-            print(rowID, subject)
+                    subject = email[s + len(s_startTag):e]
+                else:
+                    subject = '[NO SUBJECT]'
+            print("\nrow: " + rowID)
+            print("subject: " + subject)
 
         else:
             pass
