@@ -17,13 +17,13 @@ def main():
         commandClean = re.split(r'[^-%/.@\w]+', command)
 
         if command == "output=full" or command == "output=brief":
-            output = commandClean[1]
-            continue
+            output = commandStrip[1]
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
             # print(queries)
             for query in queries:
                 rowIDs.append(executeQuery(query))
+
         masterSet = rowIDs[0]
         for i in range(1, len(rowIDs)):
             masterSet.intersection(rowIDs[i])
@@ -35,43 +35,42 @@ def main():
 
 
 def displayRecs(recs, output):
-    
-    for rec in recs:
-        rowID = rec[0].decode()
-        email = rec[1].decode()
+    for record in recs:
+        rowID = record[0].decode()
+        rec = record[1].decode()
 
         if output == "brief":
             s_startTag = "<subj>"
             s_endTag = "</subj>"
-            s = email.find(s_startTag)
+            s = rec.find(s_startTag)
             if s != -1:
-                e = email.find(s_endTag)
+                e = rec.find(s_endTag)
                 if (e-s) > len(s_startTag):
-                    subject = email[s + len(s_startTag):e]
-                else:
-                    subject = ''
-            print("\nrow: " + rowID)
-            print("subject: " + subject)
+                    subject = rec[s + len(s_startTag):e]
+            print(rowID, subject)
 
         else:
             pass
 
 
 def getRecs(masterList):
-    DB_FILE = 'recs.db'
+    DB_File = 'recs.db'
     database = db.DB()
     database.set_flags(db.DB_DUP)
-    database.open(DB_FILE, None, db.DB_HASH, db.DB_CREATE)
+    database.open(DB_File, None, db.DB_HASH, db.DB_CREATE)
     cursor = database.cursor()
-
     recs = []
+
     for rowID in masterList:
-        recs.append(cursor.set(str.encode(rowID)))
-    
+        result = cursor.set(str.encode(rowID))
+        while result is not None:
+            recs.append(result)
+            result = cursor.next_dup()
+
     cursor.close()
     database.close()
-
     return recs
+
 
 
 def executeQuery(query):
@@ -112,20 +111,17 @@ def emailQuery(prefix, email):
         result = result[1].decode()
         rowIDs.add(result)
         result = cursor.next_dup()
-
     cursor.close()
     database.close()
-    
     return rowIDs
 
-
 def dateQuery(date, operator):
-    rowIDs = set()
-    DB_FILE = 'date.db'
+    DB_File = 'date.db'
     if operator == ":":
+        rowIDs = set()
         database = db.DB()
         database.set_flags(db.DB_DUP)
-        database.open(DB_FILE, None, db.DB_BTREE, db.DB_CREATE)
+        database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
         cursor = database.cursor()
         result = cursor.set(str.encode(date))
         while result is not None:
@@ -135,19 +131,17 @@ def dateQuery(date, operator):
         cursor.close()
         database.close()
     elif operator == ">":
-        rowIDs = gtRangeSearch(date, False, DB_FILE)
+        rowIDs = gtRangeSearch(date, False, DB_File)
     elif operator == ">=":
-        rowIDs = gtRangeSearch(date, True, DB_FILE)
+        rowIDs = gtRangeSearch(date, True, DB_File)
     elif operator == "<":
-        rowIDs = ltRangeSearch(date, False, DB_FILE)
+        rowIDs = ltRangeSearch(date, False, DB_File)
     else: #operator == "<="
-        rowIDs = ltRangeSearch(date, True, DB_FILE)
+        rowIDs = ltRangeSearch(date, True, DB_File)
 
     return rowIDs
 
-
-def gtRangeSearch(key, equal, dbName):
-    DB_File = dbName
+def gtRangeSearch(key, equal, DB_File):
     database = db.DB()
     database.set_flags(db.DB_DUP)
     database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
@@ -172,8 +166,7 @@ def gtRangeSearch(key, equal, dbName):
     return rowIDs
 
 
-def ltRangeSearch(key, equal, dbName):
-    DB_File = dbName
+def ltRangeSearch(key, equal, DB_File):
     database = db.DB()
     database.set_flags(db.DB_DUP)
     database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
@@ -237,15 +230,28 @@ def termQuery(prefix, term):
                     foundAll = True
                 result = cursor.next()
         else:
-            result = cursor.set(str.encode(key))
-            while result is not None:
-                result = result[1].decode()
-                rowIDs.add(result)
-                result = cursor.next_dup()
+            rowIDs = equalitySearch(key, 'terms.db')
 
     cursor.close()
     database.close()
     
+    return rowIDs
+
+def equalitySearch(key, DB_File):
+    database = db.DB()
+    database.set_flags(db.DB_DUP)
+    database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
+    cursor = database.cursor()
+    rowIDs = set()
+
+    result = cursor.set(str.encode(key))
+    while result is not None:
+        result = result[1].decode()
+        rowIDs.add(result)
+        result = cursor.next_dup()
+
+    cursor.close()
+    database.close()
     return rowIDs
     
 
@@ -270,7 +276,6 @@ def getQueries(commandClean, commandStrip, keyWords):
             queries.append(term)
     
     return queries
-
 
 if __name__ == "__main__":
     main()
