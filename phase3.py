@@ -1,12 +1,13 @@
 from bsddb3 import db
 import re
+import os
 
 def main():
     
     output = "brief"
     keyWords = ["subj", "body", "from",  "to",  "cc", "bcc", "date"]
     run = True
-
+    print("\n[output = " + output + "]\n")
     while run:
         rowIDs = []
         queries = []
@@ -16,8 +17,11 @@ def main():
         commandStrip = "".join(command.split())
         commandClean = re.split(r'[^-%/.@\w]+', command)
 
-        if command == "output=full" or command == "output=brief":
-            output = commandStrip[1]
+        if commandStrip == "output=full" or commandStrip == "output=brief":
+            output = commandClean[1]
+            os.system('clear')
+            print("\n[output = " + output + "]\n")
+            continue
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
             # print(queries)
@@ -40,20 +44,52 @@ def displayRecs(recs, output):
         email = record[1].decode()
 
         if output == "brief":
-            s_startTag = "<subj>"
-            s_endTag = "</subj>"
-            s = email.find(s_startTag)
-            if s != -1:
-                e = email.find(s_endTag)
-                if (e-s) > len(s_startTag):
-                    subject = email[s + len(s_startTag):e]
-                else:
-                    subject = '[NO SUBJECT]'
+            subject = getField(email, 'subj')
             print("\nrow: " + rowID)
             print("subject: " + subject)
 
         else:
-            pass
+            date = getField(email, 'date')
+            frm = getField(email, 'from')
+            to = getField(email, 'to')
+            subject = getField(email, 'subj')
+            cc = getField(email, 'cc')
+            bcc = getField(email, 'bcc')
+            body = getField(email, 'body')
+            print("\nrow: " + rowID)
+            print("date: " + date)
+            print("from: " + frm)
+            print("to: " + to)
+            print("subject: " + subject)
+            print("cc: " + cc)
+            print("bcc: ", bcc)
+            print("body: " + body)
+
+
+
+def getField(email, field):
+
+    fieldTags = {
+        "date": ["<date>" , "</date>"],
+        "from": ["<from>" , "</from>"],
+        "to": ["<to>" , "</to>"],
+        "subj": ["<subj>" , "</subj>"],
+        "cc": ["<cc>" , "</cc>"],
+        "bcc": ["<bcc>" , "</bcc>"],
+        "body": ["<body>" , "</body>"], 
+    }
+
+    startTag = fieldTags[field][0]
+    endTag = fieldTags[field][1]
+    s = email.find(startTag)
+    if s!= -1:
+        e = email.find(endTag)
+        if (e-s) > len(startTag):
+            field = email[s + len(startTag):e]
+        else:
+            field = "[EMPTY]"
+    
+    return field
 
 
 def getRecs(masterList):
@@ -73,7 +109,6 @@ def getRecs(masterList):
     cursor.close()
     database.close()
     return recs
-
 
 
 def executeQuery(query):
