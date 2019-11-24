@@ -23,7 +23,6 @@ def main():
             # print(queries)
             for query in queries:
                 rowIDs.append(executeQuery(query))
-
         masterSet = rowIDs[0]
         for i in range(1, len(rowIDs)):
             masterSet.intersection(rowIDs[i])
@@ -36,22 +35,25 @@ def main():
 
 def displayRecs(recs, output):
     
-    rowID = recs[0].decode()
-    rec = recs[1].decode()
+    for rec in recs:
+        rowID = rec[0].decode()
+        email = rec[1].decode()
 
-    if output == "brief":
+        if output == "brief":
+            s_startTag = "<subj>"
+            s_endTag = "</subj>"
+            s = email.find(s_startTag)
+            if s != -1:
+                e = email.find(s_endTag)
+                if (e-s) > len(s_startTag):
+                    subject = email[s + len(s_startTag):e]
+                else:
+                    subject = ''
+            print("\nrow: " + rowID)
+            print("subject: " + subject)
 
-        s_startTag = "<subj>"
-        s_endTag = "</subj>"
-        s = rec.find(s_startTag)
-        if s != -1:
-            e = rec.find(s_endTag)
-            if (e-s) > len(s_startTag):
-                subject = rec[s + len(s_startTag):e]
-        print(rowID, subject)
-
-    else:
-        pass
+        else:
+            pass
 
 
 def getRecs(masterList):
@@ -61,10 +63,14 @@ def getRecs(masterList):
     database.open(DB_FILE, None, db.DB_HASH, db.DB_CREATE)
     cursor = database.cursor()
 
+    recs = []
     for rowID in masterList:
-        rec = cursor.set(str.encode(rowID))
+        recs.append(cursor.set(str.encode(rowID)))
     
-    return rec
+    cursor.close()
+    database.close()
+
+    return recs
 
 
 def executeQuery(query):
@@ -105,9 +111,12 @@ def emailQuery(prefix, email):
         result = result[1].decode()
         rowIDs.add(result)
         result = cursor.next_dup()
+
     cursor.close()
     database.close()
+    
     return rowIDs
+
 
 def dateQuery(date, operator):
     rowIDs = set()
@@ -134,6 +143,7 @@ def dateQuery(date, operator):
         rowIDs = ltRangeSearch(date, True, DB_FILE)
 
     return rowIDs
+
 
 def gtRangeSearch(key, equal, dbName):
     DB_File = dbName
@@ -259,6 +269,7 @@ def getQueries(commandClean, commandStrip, keyWords):
             queries.append(term)
     
     return queries
+
 
 if __name__ == "__main__":
     main()
