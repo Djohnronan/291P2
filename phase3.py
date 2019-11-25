@@ -24,7 +24,6 @@ def main():
             continue
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
-            # print(queries)
             for query in queries:
                 rowIDs.append(executeQuery(query))
 
@@ -120,7 +119,6 @@ def executeQuery(query):
         if query.find(operator) != -1:
             prefix, suffix = query.split(operator)
             op = operator
-            # print(op)
             break
     if op != '':
         emailPrefix = ['to', 'from', 'cc', 'bcc']
@@ -187,9 +185,9 @@ def gtRangeSearch(key, equal, DB_File):
     rowIDs = set()
 
     result = cursor.set(str.encode(key))
-    if not equal:
+    if not equal: 
         while result[0].decode() == key:
-            result = cursor.next()
+            result = cursor.next() # iterate through to the end of the database
     while result is not None:
         while result is not None:
             print(result[0].decode())
@@ -212,7 +210,7 @@ def ltRangeSearch(key, equal, DB_File):
     rowIDs = set()
 
     result = cursor.first()
-    while True:
+    while True: # iterate through database until end condition is encountered
         if equal:
             if result[0].decode() > key:
                 break
@@ -257,7 +255,7 @@ def termQuery(prefix, term):
             while not foundAll:
                 if result == None:
                     foundAll = True
-                elif result[0].decode().startswith(key):
+                elif result[0].decode().startswith(key): # check if term is part of the prefix
                     if not foundFirst:
                         foundFirst = True
                     while result is not None:
