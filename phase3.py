@@ -1,12 +1,13 @@
 from bsddb3 import db
 import re
+import os
 
 def main():
     
     output = "brief"
     keyWords = ["subj", "body", "from",  "to",  "cc", "bcc", "date"]
     run = True
-
+    print("\n[output = " + output + "]\n")
     while run:
         rowIDs = []
         queries = []
@@ -16,8 +17,11 @@ def main():
         commandStrip = "".join(command.split())
         commandClean = re.split(r'[^-%/.@\w]+', command)
 
-        if command == "output=full" or command == "output=brief":
-            output = commandStrip[1]
+        if commandStrip == "output=full" or commandStrip == "output=brief":
+            output = commandClean[1]
+            os.system('clear')
+            print("\n[output = " + output + "]\n")
+            continue
         else:
             queries = getQueries(commandClean, commandStrip, keyWords)
             # print(queries)
@@ -35,36 +39,76 @@ def main():
 
 
 def displayRecs(recs, output):
+    for record in recs:
+        rowID = record[0].decode()
+        email = record[1].decode()
+
+        if output == "brief":
+            subject = getField(email, 'subj')
+            print("\nrow: " + rowID)
+            print("subject: " + subject)
+
+        else:
+            date = getField(email, 'date')
+            frm = getField(email, 'from')
+            to = getField(email, 'to')
+            subject = getField(email, 'subj')
+            cc = getField(email, 'cc')
+            bcc = getField(email, 'bcc')
+            body = getField(email, 'body')
+            print("\nrow: " + rowID)
+            print("date: " + date)
+            print("from: " + frm)
+            print("to: " + to)
+            print("subject: " + subject)
+            print("cc: " + cc)
+            print("bcc: ", bcc)
+            print("body: " + body)
+
+
+
+def getField(email, field):
+
+    fieldTags = {
+        "date": ["<date>" , "</date>"],
+        "from": ["<from>" , "</from>"],
+        "to": ["<to>" , "</to>"],
+        "subj": ["<subj>" , "</subj>"],
+        "cc": ["<cc>" , "</cc>"],
+        "bcc": ["<bcc>" , "</bcc>"],
+        "body": ["<body>" , "</body>"], 
+    }
+
+    startTag = fieldTags[field][0]
+    endTag = fieldTags[field][1]
+    s = email.find(startTag)
+    if s!= -1:
+        e = email.find(endTag)
+        if (e-s) > len(startTag):
+            field = email[s + len(startTag):e]
+        else:
+            field = "[EMPTY]"
     
-    rowID = recs[0].decode()
-    rec = recs[1].decode()
-
-    if output == "brief":
-
-        s_startTag = "<subj>"
-        s_endTag = "</subj>"
-        s = rec.find(s_startTag)
-        if s != -1:
-            e = rec.find(s_endTag)
-            if (e-s) > len(s_startTag):
-                subject = rec[s + len(s_startTag):e]
-        print(rowID, subject)
-
-    else:
-        pass
+    return field
 
 
 def getRecs(masterList):
-    DB_FILE = 'recs.db'
+    DB_File = 'recs.db'
     database = db.DB()
     database.set_flags(db.DB_DUP)
-    database.open(DB_FILE, None, db.DB_HASH, db.DB_CREATE)
+    database.open(DB_File, None, db.DB_HASH, db.DB_CREATE)
     cursor = database.cursor()
+    recs = []
 
     for rowID in masterList:
-        rec = cursor.set(str.encode(rowID))
-    
-    return rec
+        result = cursor.set(str.encode(rowID))
+        while result is not None:
+            recs.append(result)
+            result = cursor.next_dup()
+
+    cursor.close()
+    database.close()
+    return recs
 
 
 def executeQuery(query):
@@ -110,12 +154,12 @@ def emailQuery(prefix, email):
     return rowIDs
 
 def dateQuery(date, operator):
-    rowIDs = set()
-    DB_FILE = 'date.db'
+    DB_File = 'date.db'
     if operator == ":":
+        rowIDs = set()
         database = db.DB()
         database.set_flags(db.DB_DUP)
-        database.open(DB_FILE, None, db.DB_BTREE, db.DB_CREATE)
+        database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
         cursor = database.cursor()
         result = cursor.set(str.encode(date))
         while result is not None:
@@ -125,18 +169,17 @@ def dateQuery(date, operator):
         cursor.close()
         database.close()
     elif operator == ">":
-        rowIDs = gtRangeSearch(date, False, DB_FILE)
+        rowIDs = gtRangeSearch(date, False, DB_File)
     elif operator == ">=":
-        rowIDs = gtRangeSearch(date, True, DB_FILE)
+        rowIDs = gtRangeSearch(date, True, DB_File)
     elif operator == "<":
-        rowIDs = ltRangeSearch(date, False, DB_FILE)
+        rowIDs = ltRangeSearch(date, False, DB_File)
     else: #operator == "<="
-        rowIDs = ltRangeSearch(date, True, DB_FILE)
+        rowIDs = ltRangeSearch(date, True, DB_File)
 
     return rowIDs
 
-def gtRangeSearch(key, equal, dbName):
-    DB_File = dbName
+def gtRangeSearch(key, equal, DB_File):
     database = db.DB()
     database.set_flags(db.DB_DUP)
     database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
@@ -161,8 +204,7 @@ def gtRangeSearch(key, equal, dbName):
     return rowIDs
 
 
-def ltRangeSearch(key, equal, dbName):
-    DB_File = dbName
+def ltRangeSearch(key, equal, DB_File):
     database = db.DB()
     database.set_flags(db.DB_DUP)
     database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
@@ -226,15 +268,28 @@ def termQuery(prefix, term):
                     foundAll = True
                 result = cursor.next()
         else:
-            result = cursor.set(str.encode(key))
-            while result is not None:
-                result = result[1].decode()
-                rowIDs.add(result)
-                result = cursor.next_dup()
+            rowIDs = equalitySearch(key, 'terms.db')
 
     cursor.close()
     database.close()
     
+    return rowIDs
+
+def equalitySearch(key, DB_File):
+    database = db.DB()
+    database.set_flags(db.DB_DUP)
+    database.open(DB_File, None, db.DB_BTREE, db.DB_CREATE)
+    cursor = database.cursor()
+    rowIDs = set()
+
+    result = cursor.set(str.encode(key))
+    while result is not None:
+        result = result[1].decode()
+        rowIDs.add(result)
+        result = cursor.next_dup()
+
+    cursor.close()
+    database.close()
     return rowIDs
     
 
